@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <title>LastBite – Grab the last, save more</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Ccircle cx='64' cy='64' r='64' fill='%230f172a'/%3E%3Cpath d='M32 80c24 0 24-32 48-32 8 0 16 4 16 16 0 16-16 32-40 32-16 0-24-8-24-16z' fill='%23f59e0b'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">🍞</span>
+      <h1>LastBite</h1>
+    </div>
+    <nav class="view-toggle" role="tablist" aria-label="Switch view">
+      <button id="btn-consumer" class="toggle-btn active" role="tab" aria-selected="true" aria-controls="consumer-view">Consumer</button>
+      <button id="btn-vendor" class="toggle-btn" role="tab" aria-selected="false" aria-controls="vendor-view">Vendor</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-left">
+        <div class="ribbon">Freshly Baked • Daily Deals</div>
+        <h2 class="hero-title">
+          Crafting <span class="hero-accent">Delightful</span> last-hour <span class="hero-accent">Pastry</span> deals
+        </h2>
+        <p class="muted">Save more, reduce waste, and treat yourself to artisan bakes.</p>
+        <div class="hero-actions">
+          <button id="cta-explore" class="primary">Explore Deals</button>
+          <button id="cta-favorites" class="secondary">View Favorites</button>
+        </div>
+      </div>
+      <div class="hero-right">
+        <img src="./assets/cake.png" alt="Cake" class="hero-img">
+      </div>
+    </section>
+
+    <section class="section section--stripe">
+      <div class="section-header">
+        <h3 class="section-title">Crafting sweet moments with every creation</h3>
+        <p class="section-sub muted">From surprise boxes to single treats – discover last-hour delights from nearby bakers.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <img src="./assets/cake.png" alt="Cake" class="feature-img">
+          <div class="feature-meta">
+            <div class="chip">French Pastry & Cake</div>
+          </div>
+        </article>
+        <article class="feature-card">
+          <img src="./assets/buns.png" alt="Buns" class="feature-img">
+          <div class="feature-meta">
+            <div class="chip alt">Sweet Buns</div>
+          </div>
+        </article>
+        <article class="feature-card">
+          <img src="./assets/braid.png" alt="Braid" class="feature-img">
+          <div class="feature-meta">
+            <div class="chip">Braided Bread</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="banner">
+      <div class="banner-inner">
+        <img src="./assets/baguette.png" class="banner-img" alt="Baguettes">
+        <div class="banner-text">
+          <div class="ribbon">French Pastry & Cake</div>
+          <h3 class="banner-title">Bake Bliss Pastry</h3>
+        </div>
+      </div>
+    </section>
+    <section id="consumer-view" role="tabpanel" aria-labelledby="btn-consumer">
+      <div class="controls">
+        <div class="filters">
+          <label>
+            <input type="checkbox" id="filter-mystery" checked>
+            Mystery boxes
+          </label>
+          <label>
+            <input type="checkbox" id="filter-items" checked>
+            Discounted items
+          </label>
+          <select id="filter-distance" aria-label="Distance filter">
+            <option value="2">Within 2 km</option>
+            <option value="5" selected>Within 5 km</option>
+            <option value="10">Within 10 km</option>
+          </select>
+        </div>
+        <span class="muted">Tap heart to favorite • Bell to subscribe</span>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Deal availability tabs">
+        <button id="tab-available" class="tab-btn active" role="tab" aria-selected="true" aria-controls="deals-available">Available Now</button>
+        <button id="tab-soon" class="tab-btn" role="tab" aria-selected="false" aria-controls="deals-soon">Coming Soon</button>
+      </div>
+
+      <section class="deals" id="deals-available" aria-live="polite" aria-busy="false"></section>
+      <section class="deals hidden" id="deals-soon" aria-live="polite" aria-busy="false"></section>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <h3 class="section-title">Our Best Menu</h3>
+      </div>
+      <div class="gallery">
+        <img src="./assets/roll.png" alt="Roll">
+        <img src="./assets/loaf.png" alt="Loaf">
+        <img src="./assets/bread.png" alt="Bread">
+        <img src="./assets/buns.png" alt="Buns">
+        <img src="./assets/braid.png" alt="Braid">
+      </div>
+    </section>
+
+    <section class="section section--story">
+      <div class="story-grid">
+        <article class="story-card">
+          <h4>How we create our first menu</h4>
+          <p class="muted">Indulge in the artistry of our bakery and pastry mastery. From decadent cakes to flaky pastries, our creations have delighted taste buds for years.</p>
+        </article>
+        <article class="story-card">
+          <h4>Baking joy into every bite</h4>
+          <p class="muted">Experience the magic of warm bakes and cozy flavors. Save more with last-hour specials while reducing waste.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="vendor-view" class="hidden" role="tabpanel" aria-labelledby="btn-vendor">
+      <div class="vendor-header">
+        <div>
+          <h2 id="vendor-name">Your Bakery</h2>
+          <p class="muted">Today \u2013 closes at <span id="close-time">18:00</span></p>
+        </div>
+        <div class="toggle last-hour">
+          <label class="switch">
+            <input id="toggle-last-hour" type="checkbox">
+            <span class="slider"></span>
+          </label>
+          <span>Last-hour promos</span>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3 style="margin-top:0;">Store Settings</h3>
+        <div class="row" style="gap:14px;">
+          <div class="row">
+            <label for="input-close">Closing time</label>
+            <input id="input-close" type="time" value="18:00">
+          </div>
+          <div class="row">
+            <label for="input-window">Sale window</label>
+            <select id="input-window">
+              <option value="1">Last 1 hour</option>
+              <option value="2" selected>Last 2 hours</option>
+            </select>
+          </div>
+          <div class="row">
+            <label>Open for sales</label>
+            <label class="switch">
+              <input id="toggle-open" type="checkbox">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3 style="margin-top:0;">Logistics Settings</h3>
+        <div class="row" style="gap:14px;">
+          <div class="row">
+            <label for="metric-select">Metric</label>
+            <select id="metric-select">
+              <option value="item">By item count</option>
+              <option value="weight">By weight (kg)</option>
+            </select>
+          </div>
+          <div class="row">
+            <label for="logistics-link">Link logistics (optional)</label>
+            <input id="logistics-link" type="text" placeholder="Paste API URL or leave blank">
+          </div>
+        </div>
+      </div>
+
+      <div class="vendor-actions">
+        <button id="create-mystery" class="primary">Add Mystery Pack</button>
+        <button id="sell-coupons" class="secondary">Sell Coupon Package</button>
+      </div>
+
+      <div class="section-card">
+        <div class="row" style="gap:14px;">
+          <div class="row">
+            <label for="mystery-size">Size</label>
+            <select id="mystery-size">
+              <option value="small">Small (1 item)</option>
+              <option value="medium" selected>Medium (2 items)</option>
+              <option value="large">Large (3 items)</option>
+            </select>
+          </div>
+          <div class="row">
+            <label for="mystery-price">Price</label>
+            <input id="mystery-price" type="number" min="1" step="0.5" value="6">
+          </div>
+          <div class="row">
+            <label for="mystery-qty">Qty</label>
+            <input id="mystery-qty" type="number" min="1" step="1" value="5">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3 style="margin-top:0;">Coupon Package</h3>
+        <div class="row" style="gap:14px;">
+          <div class="row">
+            <label for="coupon-count">Coupons</label>
+            <input id="coupon-count" type="number" min="1" step="1" value="10">
+          </div>
+          <div class="row">
+            <label for="coupon-discount">Discount %</label>
+            <input id="coupon-discount" type="number" min="10" max="90" step="5" value="50">
+          </div>
+          <div class="row">
+            <label for="coupon-price">Price</label>
+            <input id="coupon-price" type="number" min="1" step="0.5" value="15">
+          </div>
+        </div>
+      </div>
+
+      <section class="inventory">
+        <h3>Live Inventory</h3>
+        <ul id="inventory-list" class="list"></ul>
+      </section>
+
+      <section class="analytics">
+        <h3>Today\u2019s Impact</h3>
+        <div class="metrics">
+          <div class="metric"><div id="m-revenue">$0</div><span>Revenue recovered</span></div>
+          <div class="metric"><div id="m-sold">0</div><span>Items sold</span></div>
+          <div class="metric"><div id="m-waste">0</div><span>Estimated waste prevented (kg)</span></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span>Eco-conscious deals, daily.</span>
+    <span class="dot">•</span>
+    <span>Demo \u2013 no sign-in required</span>
+  </footer>
+
+  <script src="./app.js" type="module"></script>
+</body>
+</html>
+
+

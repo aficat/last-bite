@@ -1,0 +1,12 @@
+{
+  "name": "LastBite",
+  "short_name": "LastBite",
+  "description": "Grab the last, save more. End-of-day food deals.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": []
+}
+
+
