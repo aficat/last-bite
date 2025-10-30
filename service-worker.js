@@ -1,10 +1,18 @@
-const CACHE = 'lastbite-v1';
+const CACHE = 'lastbite-v2';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './app.js',
-  './manifest.webmanifest'
+  './manifest.webmanifest',
+  // Common images (ensure these exist under assets/)
+  './assets/cake.png',
+  './assets/baguette.png',
+  './assets/buns.png',
+  './assets/braid.png',
+  './assets/roll.png',
+  './assets/loaf.png',
+  './assets/bread.png'
 ];
 
 self.addEventListener('install', (e) => {
