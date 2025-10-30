@@ -189,6 +189,20 @@ function renderVendor() {
 function bindEvents() {
   $('#btn-consumer').addEventListener('click', () => setView('consumer'));
   $('#btn-vendor').addEventListener('click', () => setView('vendor'));
+  // CTA buttons
+  const scrollToDeals = () => {
+    setView('consumer');
+    state.activeDealsTab = 'available';
+    renderDeals();
+    document.getElementById('deals-available')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  $('#cta-explore')?.addEventListener('click', scrollToDeals);
+  $('#cta-favorites')?.addEventListener('click', () => {
+    setView('consumer');
+    state.activeDealsTab = 'available';
+    renderDeals();
+    document.getElementById('deals-available')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 
   $('#filter-mystery').addEventListener('change', renderDeals);
   $('#filter-items').addEventListener('change', renderDeals);
