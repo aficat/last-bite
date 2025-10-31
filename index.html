@@ -18,10 +18,20 @@
       <span class="logo" aria-hidden="true">🍞</span>
       <h1>LastBite</h1>
     </div>
-    <nav class="view-toggle" role="tablist" aria-label="Switch view">
-      <button id="btn-consumer" class="toggle-btn active" role="tab" aria-selected="true" aria-controls="consumer-view">Consumer</button>
-      <button id="btn-vendor" class="toggle-btn" role="tab" aria-selected="false" aria-controls="vendor-view">Vendor</button>
-    </nav>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <button id="cart-btn" class="icon-btn" title="Shopping Cart" style="position:relative;">
+        🛒
+        <span id="cart-badge" class="cart-badge" style="display:none;">0</span>
+      </button>
+      <label class="switch" style="margin:0;" title="Dark mode">
+        <input id="dark-mode-toggle" type="checkbox">
+        <span class="slider"></span>
+      </label>
+      <nav class="view-toggle" role="tablist" aria-label="Switch view">
+        <button id="btn-consumer" class="toggle-btn active" role="tab" aria-selected="true" aria-controls="consumer-view">Consumer</button>
+        <button id="btn-vendor" class="toggle-btn" role="tab" aria-selected="false" aria-controls="vendor-view">Vendor</button>
+      </nav>
+    </div>
   </header>
 
   <main class="container">
@@ -81,6 +91,13 @@
     <section id="consumer-view" role="tabpanel" aria-labelledby="btn-consumer">
       <div class="controls">
         <div class="filters">
+          <input type="search" id="search-deals" placeholder="Search deals or vendors..." class="search-input">
+          <select id="sort-deals" aria-label="Sort deals">
+            <option value="distance">Sort by Distance</option>
+            <option value="price">Sort by Price</option>
+            <option value="discount">Sort by Discount</option>
+            <option value="name">Sort by Name</option>
+          </select>
           <label>
             <input type="checkbox" id="filter-mystery" checked>
             Mystery boxes
@@ -94,6 +111,9 @@
             <option value="5" selected>Within 5 km</option>
             <option value="10">Within 10 km</option>
           </select>
+          <div class="price-range">
+            <label>Price: $<input type="number" id="filter-price-min" min="0" max="100" value="0" style="width:60px;"> - $<input type="number" id="filter-price-max" min="0" max="100" value="100" style="width:60px;"></label>
+          </div>
         </div>
         <span class="muted">Tap heart to favorite • Bell to subscribe</span>
       </div>
@@ -250,10 +270,48 @@
   </main>
 
   <footer class="app-footer">
-    <span>Eco-conscious deals, daily.</span>
-    <span class="dot">•</span>
-    <span>Demo \u2013 no sign-in required</span>
+    
   </footer>
+
+  <!-- Item Detail Modal -->
+  <div id="item-modal" class="modal hidden">
+    <div class="modal-content">
+      <button id="close-item-modal" class="modal-close">×</button>
+      <img id="modal-img" src="" alt="" class="modal-img">
+      <h3 id="modal-title"></h3>
+      <p class="muted" id="modal-vendor"></p>
+      <div class="modal-info">
+        <div class="modal-price-row">
+          <span class="price" id="modal-price"></span>
+          <span class="strike" id="modal-original"></span>
+          <span class="chip" id="modal-discount"></span>
+        </div>
+        <div class="modal-meta">
+          <span class="chip">Quantity: <span id="modal-qty"></span></span>
+          <span class="chip alt" id="modal-kind"></span>
+        </div>
+      </div>
+      <button id="add-to-cart-btn" class="primary" style="width:100%; margin-top:16px;">Add to Cart</button>
+    </div>
+  </div>
+
+  <!-- Cart Modal -->
+  <div id="cart-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Shopping Cart</h3>
+        <button id="close-cart" class="modal-close">×</button>
+      </div>
+      <div id="cart-items" class="cart-list"></div>
+      <div class="cart-footer">
+        <div class="cart-total-row">
+          <span>Total:</span>
+          <span class="price" id="cart-total">$0.00</span>
+        </div>
+        <button id="checkout-btn" class="primary" style="width:100%;">Checkout</button>
+      </div>
+    </div>
+  </div>
 
   <script src="./app.js" type="module"></script>
 </body>
