@@ -7,11 +7,44 @@ const assetByKind = {
   item: './assets/bread.png',
 };
 
-const state = {
+// Load state from localStorage
+function loadState() {
+  try {
+    const saved = localStorage.getItem('lastbite-state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        ...parsed,
+        favorites: new Set(parsed.favorites || []),
+        subscriptions: new Set(parsed.subscriptions || []),
+      };
+    }
+  } catch (_) {}
+  return null;
+}
+
+function saveState() {
+  try {
+    const toSave = {
+      ...state,
+      favorites: Array.from(state.favorites),
+      subscriptions: Array.from(state.subscriptions),
+      cart: Array.from(state.cart),
+    };
+    localStorage.setItem('lastbite-state', JSON.stringify(toSave));
+  } catch (_) {}
+}
+
+const state = loadState() || {
   view: 'consumer',
   activeDealsTab: 'available', // 'available' | 'soon'
   favorites: new Set(), // vendorId strings
   subscriptions: new Set(), // vendorId strings
+  cart: [], // [{ vendorId, title, price, qty, entry }]
+  searchQuery: '',
+  sortBy: 'distance', // 'distance' | 'price' | 'discount' | 'name'
+  priceRange: { min: 0, max: 100 },
+  darkMode: false,
   vendor: {
     id: 'self',
     name: 'Maple & Crust Bakery',
@@ -55,6 +88,16 @@ const state = {
 
 function formatPrice(v) { return `$${v.toFixed(2).replace(/\.00$/, '')}`; }
 
+// Apply dark mode
+function applyDarkMode(enabled) {
+  state.darkMode = enabled;
+  document.documentElement.classList.toggle('dark-mode', enabled);
+  saveState();
+}
+
+// Initialize dark mode from state
+if (state.darkMode) applyDarkMode(true);
+
 function setView(next) {
   state.view = next;
   const consumer = $('#consumer-view');
@@ -82,6 +125,9 @@ function renderDeals() {
   const showMystery = $('#filter-mystery').checked;
   const showItems = $('#filter-items').checked; // includes coupons
   const maxKm = Number($('#filter-distance').value);
+  const searchQuery = (state.searchQuery || '').toLowerCase();
+  const minPrice = state.priceRange?.min || 0;
+  const maxPrice = state.priceRange?.max || 100;
 
   const vendorSelf = {
     id: state.vendor.id,
@@ -102,8 +148,37 @@ function renderDeals() {
     entries: v.offers
       .filter(o => (o.kind === 'mystery' ? showMystery : showItems))
       .filter(() => v.distanceKm <= maxKm)
-      .map(o => ({ ...o, img: assetByKind[o.kind] }))
-  }))];
+      .map(o => ({ ...o, img: assetByKind[o.kind], vendorId: v.id }))
+  }))].map(block => ({
+    ...block,
+    entries: block.entries
+      .filter(e => {
+        const matchesSearch = !searchQuery || 
+          e.title.toLowerCase().includes(searchQuery) ||
+          block.name.toLowerCase().includes(searchQuery);
+        const matchesPrice = e.price >= minPrice && e.price <= maxPrice;
+        return matchesSearch && matchesPrice;
+      })
+  }));
+
+  // Sort entries based on sortBy
+  blocks.forEach(block => {
+    block.entries.sort((a, b) => {
+      switch (state.sortBy) {
+        case 'price':
+          return a.price - b.price;
+        case 'discount':
+          const pctA = Math.round((1 - a.price / (a.original || (a.price*2))) * 100);
+          const pctB = Math.round((1 - b.price / (b.original || (b.price*2))) * 100);
+          return pctB - pctA;
+        case 'name':
+          return a.title.localeCompare(b.title);
+        case 'distance':
+        default:
+          return block.distanceKm - block.distanceKm;
+      }
+    });
+  });
 
   const [availableBlocks, comingBlocks] = [
     blocks.filter(b => b.openForDeals && b.entries.length),
@@ -111,13 +186,17 @@ function renderDeals() {
   ];
 
   function renderCards(list) {
+    if (list.length === 0) {
+      return '<div class="empty-state"><p>No deals found. Try adjusting your filters or search query.</p></div>';
+    }
     return list.flatMap(block => block.entries.map(entry => {
       const pct = Math.round((1 - entry.price / (entry.original || (entry.price*2))) * 100);
       const fav = state.favorites.has(block.id) ? 'active' : '';
       const sub = state.subscriptions.has(block.id) ? 'active' : '';
       const kindLabel = entry.kind === 'mystery' ? 'Mystery Box' : (entry.kind === 'coupon' ? 'Coupon Pack' : 'Item');
+      const cartQty = state.cart.filter(c => c.title === entry.title && c.vendorId === block.id).length;
       return `
-        <article class="deal-card" data-vendor-id="${block.id}">
+        <article class="deal-card fade-in" data-vendor-id="${block.id}" data-entry-id="${entry.kind}-${block.id}">
           ${entry.img ? `<img class="deal-img" src="${entry.img}" alt="">` : ''}
           <div class="card-top">
             <h4>${block.name}</h4>
@@ -137,7 +216,7 @@ function renderDeals() {
             ${entry.original ? `<span class="strike">${formatPrice(entry.original)}</span>` : ''}
           </div>
           <div style="margin-top:10px; display:flex; gap:8px;">
-            <button class="primary" data-action="buy" data-title="${entry.title}">Buy</button>
+            <button class="primary" data-action="view-details" data-title="${entry.title}" data-price="${entry.price}" data-original="${entry.original || ''}" data-kind="${entry.kind}" data-vendor="${block.name}">View Details</button>
             <button class="secondary" data-action="share" data-title="${entry.title}">Share</button>
           </div>
         </article>`;
@@ -184,6 +263,73 @@ function renderVendor() {
   $('#m-revenue').textContent = formatPrice(state.vendor.metrics.revenue);
   $('#m-sold').textContent = String(state.vendor.metrics.sold);
   $('#m-waste').textContent = (state.vendor.metrics.wasteKg).toFixed(1);
+  
+  // Update cart badge
+  updateCartBadge();
+}
+
+function updateCartBadge() {
+  const badge = $('#cart-badge');
+  const count = state.cart.length;
+  if (badge) {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'block' : 'none';
+  }
+}
+
+function renderCartModal() {
+  if (!state.cart.length) {
+    $('#cart-modal')?.classList.add('hidden');
+    return;
+  }
+  const modal = $('#cart-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  const items = state.cart.reduce((acc, item) => {
+    const key = `${item.vendorId}-${item.title}`;
+    if (!acc[key]) acc[key] = { ...item, count: 0 };
+    acc[key].count++;
+    return acc;
+  }, {});
+  
+  const total = Object.values(items).reduce((sum, item) => sum + (item.price * item.count), 0);
+  
+  $('#cart-items').innerHTML = Object.values(items).map(item => `
+    <div class="cart-item">
+      <div>
+        <div style="font-weight:600;">${item.title}</div>
+        <div class="muted">${item.vendorName}</div>
+      </div>
+      <div class="cart-item-actions">
+        <div class="qty-controls">
+          <button class="qty-btn" data-action="dec-cart" data-key="${item.vendorId}-${item.title}">−</button>
+          <span>${item.count}</span>
+          <button class="qty-btn" data-action="inc-cart" data-key="${item.vendorId}-${item.title}">+</button>
+        </div>
+        <span class="price">${formatPrice(item.price * item.count)}</span>
+        <button class="icon-btn" data-action="remove-cart" data-key="${item.vendorId}-${item.title}">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+  $('#cart-total').textContent = formatPrice(total);
+}
+
+function showItemModal(entry) {
+  const modal = $('#item-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  const pct = Math.round((1 - entry.price / (entry.original || (entry.price*2))) * 100);
+  $('#modal-title').textContent = entry.title;
+  $('#modal-vendor').textContent = entry.vendor;
+  $('#modal-price').textContent = formatPrice(entry.price);
+  $('#modal-original').textContent = entry.original ? formatPrice(entry.original) : '';
+  $('#modal-discount').textContent = `${pct}% off`;
+  $('#modal-qty').textContent = entry.qty || 'Limited';
+  $('#modal-kind').textContent = entry.kind === 'mystery' ? 'Mystery Box' : (entry.kind === 'coupon' ? 'Coupon Pack' : 'Item');
+  $('#modal-img').src = entry.img || './assets/bread.png';
+  
+  // Store current entry for add to cart
+  modal.dataset.entry = JSON.stringify(entry);
 }
 
 function bindEvents() {
@@ -207,6 +353,121 @@ function bindEvents() {
   $('#filter-mystery').addEventListener('change', renderDeals);
   $('#filter-items').addEventListener('change', renderDeals);
   $('#filter-distance').addEventListener('change', renderDeals);
+  
+  // Search functionality
+  const searchInput = $('#search-deals');
+  if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        state.searchQuery = e.target.value;
+        saveState();
+        renderDeals();
+      }, 300);
+    });
+  }
+  
+  // Sort functionality
+  const sortSelect = $('#sort-deals');
+  if (sortSelect) {
+    sortSelect.value = state.sortBy || 'distance';
+    sortSelect.addEventListener('change', (e) => {
+      state.sortBy = e.target.value;
+      saveState();
+      renderDeals();
+    });
+  }
+  
+  // Price range filter
+  const minPriceInput = $('#filter-price-min');
+  const maxPriceInput = $('#filter-price-max');
+  if (minPriceInput && maxPriceInput) {
+    minPriceInput.value = state.priceRange?.min || 0;
+    maxPriceInput.value = state.priceRange?.max || 100;
+    const updatePriceRange = () => {
+      state.priceRange = {
+        min: Number(minPriceInput.value) || 0,
+        max: Number(maxPriceInput.value) || 100,
+      };
+      saveState();
+      renderDeals();
+    };
+    minPriceInput.addEventListener('change', updatePriceRange);
+    maxPriceInput.addEventListener('change', updatePriceRange);
+  }
+  
+  // Dark mode toggle
+  const darkModeToggle = $('#dark-mode-toggle');
+  if (darkModeToggle) {
+    darkModeToggle.checked = state.darkMode || false;
+    darkModeToggle.addEventListener('change', (e) => {
+      applyDarkMode(e.target.checked);
+    });
+  }
+  
+  // Cart modal events
+  $('#cart-btn')?.addEventListener('click', () => {
+    $('#cart-modal')?.classList.toggle('hidden');
+    renderCartModal();
+  });
+  
+  $('#close-cart')?.addEventListener('click', () => {
+    $('#cart-modal')?.classList.add('hidden');
+  });
+  
+  $('#close-item-modal')?.addEventListener('click', () => {
+    $('#item-modal')?.classList.add('hidden');
+  });
+  
+  $('#cart-items')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const action = btn.getAttribute('data-action');
+    const key = btn.getAttribute('data-key');
+    const [vendorId, ...titleParts] = key.split('-');
+    const title = titleParts.join('-');
+    
+    if (action === 'remove-cart') {
+      state.cart = state.cart.filter(c => !(c.vendorId === vendorId && c.title === title));
+      saveState();
+      renderCartModal();
+      updateCartBadge();
+    } else if (action === 'dec-cart') {
+      const idx = state.cart.findIndex(c => c.vendorId === vendorId && c.title === title);
+      if (idx >= 0) state.cart.splice(idx, 1);
+      saveState();
+      renderCartModal();
+      updateCartBadge();
+    } else if (action === 'inc-cart') {
+      const first = state.cart.find(c => c.vendorId === vendorId && c.title === title);
+      if (first) state.cart.push(first);
+      saveState();
+      renderCartModal();
+      updateCartBadge();
+    }
+  });
+  
+  $('#checkout-btn')?.addEventListener('click', () => {
+    if (state.cart.length === 0) return;
+    const total = state.cart.reduce((sum, item) => sum + item.price, 0);
+    alert(`Demo checkout: ${state.cart.length} items for ${formatPrice(total)}`);
+    state.cart = [];
+    saveState();
+    renderCartModal();
+    updateCartBadge();
+    $('#cart-modal')?.classList.add('hidden');
+  });
+  
+  $('#add-to-cart-btn')?.addEventListener('click', () => {
+    const modal = $('#item-modal');
+    if (!modal || !modal.dataset.entry) return;
+    const entry = JSON.parse(modal.dataset.entry);
+    state.cart.push(entry);
+    saveState();
+    updateCartBadge();
+    alert(`${entry.title} added to cart!`);
+  });
 
   // Consumer inner tabs
   $('#tab-available').addEventListener('click', () => {
@@ -294,16 +555,53 @@ function bindEvents() {
     const action = btn.getAttribute('data-action');
     const card = e.target.closest('.deal-card');
     const vendorId = card?.getAttribute('data-vendor-id');
-    const title = btn.getAttribute('data-title');
-    if (action === 'buy') alert('Demo purchase: ' + title);
-    if (action === 'share') navigator.share?.({ title: 'LastBite deal', text: 'Check this: ' + title, url: location.href }).catch(() => {});
+    const entryId = card?.getAttribute('data-entry-id');
+    
+    if (action === 'view-details') {
+      const title = btn.getAttribute('data-title');
+      const price = Number(btn.getAttribute('data-price'));
+      const original = btn.getAttribute('data-original') ? Number(btn.getAttribute('data-original')) : null;
+      const kind = btn.getAttribute('data-kind');
+      const vendor = btn.getAttribute('data-vendor');
+      const img = assetByKind[kind] || './assets/bread.png';
+      
+      // Find full entry details
+      const blocks = [{
+        id: state.vendor.id,
+        name: state.vendor.name,
+        entries: state.vendor.inventory.map(i => ({ ...i, kind: i.type, img: assetByKind[i.type], vendorId: state.vendor.id }))
+      }, ...state.consumersNearby.map(v => ({
+        id: v.id,
+        name: v.vendor,
+        entries: v.offers.map(o => ({ ...o, img: assetByKind[o.kind], vendorId: v.id }))
+      }))];
+      
+      const entry = blocks.flatMap(b => b.entries).find(e => e.title === title && e.vendorId === vendorId);
+      
+      if (entry) {
+        showItemModal({
+          ...entry,
+          vendor: vendor || blocks.find(b => b.id === vendorId)?.name || 'Unknown',
+          vendorId,
+        });
+      }
+    }
+    
+    if (action === 'share') {
+      const title = btn.getAttribute('data-title');
+      navigator.share?.({ title: 'LastBite deal', text: 'Check this: ' + title, url: location.href }).catch(() => {});
+    }
+    
     if (action === 'fav' && vendorId) {
       if (state.favorites.has(vendorId)) state.favorites.delete(vendorId); else state.favorites.add(vendorId);
+      saveState();
       renderDeals();
     }
+    
     if (action === 'sub' && vendorId) {
       try { await Notification.requestPermission(); } catch(_) {}
       if (state.subscriptions.has(vendorId)) state.subscriptions.delete(vendorId); else state.subscriptions.add(vendorId);
+      saveState();
       renderDeals();
       maybeNotify('Subscribed to deal alerts');
     }
@@ -353,6 +651,17 @@ function init() {
   setView('consumer');
   simulateRealtime();
   registerSW();
+  updateCartBadge();
+  
+  // Load favorites/subscriptions from state
+  if (state.favorites.size) {
+    const favs = Array.from(state.favorites);
+    state.favorites = new Set(favs);
+  }
+  if (state.subscriptions.size) {
+    const subs = Array.from(state.subscriptions);
+    state.subscriptions = new Set(subs);
+  }
 }
 
 init();
