@@ -39,11 +39,11 @@
   <main class="container">
     <section class="hero">
       <div class="hero-left">
-        <div class="ribbon">Freshly Baked • Daily Deals</div>
+        <div class="ribbon">Grab the last, save more</div>
         <h2 class="hero-title">
-          Crafting <span class="hero-accent">Delightful</span> last-hour <span class="hero-accent">Pastry</span> deals
+          Last-hour deals to <span class="hero-accent">reduce waste</span> and <span class="hero-accent">save money</span>
         </h2>
-        <p class="muted">Save more, reduce waste, and treat yourself to artisan bakes.</p>
+        <p class="muted">Help vendors recover costs from unsold items. Get affordable fresh food during final hours. Mystery boxes and discounted items from nearby bakeries, cafés, and delis.</p>
         <div class="hero-actions">
           <button id="cta-explore" class="primary">Explore Deals</button>
           <button id="cta-favorites" class="secondary">View Favorites</button>
@@ -57,7 +57,7 @@
     <section class="section section--stripe">
       <div class="section-header">
         <h3 class="section-title">Crafting sweet moments with every creation</h3>
-        <p class="section-sub muted">From surprise boxes to single treats – discover last-hour delights from nearby bakers.</p>
+        <p class="section-sub muted">From surprise boxes to discounted individual items – discover last-hour deals from nearby vendors to reduce waste and save money.</p>
       </div>
       <div class="feature-grid">
         <article class="feature-card">
@@ -106,7 +106,7 @@
           </label>
           <label>
             <input type="checkbox" id="filter-items" checked>
-            Discounted items
+            Discounted items & coupons
           </label>
           <select id="filter-distance" aria-label="Distance filter">
             <option value="2">Within 2 km</option>
@@ -214,6 +214,7 @@
       <div class="vendor-actions">
         <button id="create-mystery" class="primary">Add Mystery Pack</button>
         <button id="sell-coupons" class="secondary">Sell Coupon Package</button>
+        <button id="add-discount-item" class="secondary">Add Discounted Item</button>
       </div>
 
       <div class="section-card">
@@ -255,13 +256,36 @@
         </div>
       </div>
 
+      <div class="section-card">
+        <h3 style="margin-top:0;">Individual Discounted Item</h3>
+        <div class="row" style="gap:14px;">
+          <div class="row">
+            <label for="item-name">Item Name</label>
+            <input id="item-name" type="text" placeholder="e.g., Fresh Croissant" value="">
+          </div>
+          <div class="row">
+            <label for="item-original-price">Original Price</label>
+            <input id="item-original-price" type="number" min="1" step="0.5" value="5">
+          </div>
+          <div class="row">
+            <label for="item-discount-pct">Discount %</label>
+            <input id="item-discount-pct" type="number" min="10" max="90" step="5" value="50">
+          </div>
+          <div class="row">
+            <label for="item-qty">Quantity</label>
+            <input id="item-qty" type="number" min="1" step="1" value="3">
+          </div>
+        </div>
+      </div>
+
       <section class="inventory">
         <h3>Live Inventory</h3>
         <ul id="inventory-list" class="list"></ul>
       </section>
 
       <section class="analytics">
-        <h3>Today\u2019s Impact</h3>
+        <h3>Today's Impact</h3>
+        <p class="muted" style="margin-bottom: 12px;">Track your sales recovery and waste reduction progress</p>
         <div class="metrics">
           <div class="metric"><div id="m-revenue">$0</div><span>Revenue recovered</span></div>
           <div class="metric"><div id="m-sold">0</div><span>Items sold</span></div>

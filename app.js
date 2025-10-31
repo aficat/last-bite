@@ -2,9 +2,9 @@ const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
 const assetByKind = {
-  mystery: './assets/roll.png',
-  coupon: './assets/loaf.png',
-  item: './assets/bread.png',
+  mystery: './assets/images/Images-1.png',
+  coupon: './assets/images/Images-2.png',
+  item: './assets/images/Image-1.png',
 };
 
 // Load state from localStorage
@@ -193,7 +193,7 @@ function renderDeals() {
       const pct = Math.round((1 - entry.price / (entry.original || (entry.price*2))) * 100);
       const fav = state.favorites.has(block.id) ? 'active' : '';
       const sub = state.subscriptions.has(block.id) ? 'active' : '';
-      const kindLabel = entry.kind === 'mystery' ? 'Mystery Box' : (entry.kind === 'coupon' ? 'Coupon Pack' : 'Item');
+      const kindLabel = entry.kind === 'mystery' ? 'Mystery Box' : (entry.kind === 'coupon' ? 'Coupon Pack' : 'Discounted Item');
       const cartQty = state.cart.filter(c => c.title === entry.title && c.vendorId === block.id).length;
       return `
         <article class="deal-card fade-in" data-vendor-id="${block.id}" data-entry-id="${entry.kind}-${block.id}">
@@ -244,11 +244,14 @@ function renderVendor() {
   $('#metric-select').value = state.vendor.metric;
 
   const list = $('#inventory-list');
-  list.innerHTML = state.vendor.inventory.map(item => `
+  list.innerHTML = state.vendor.inventory.map(item => {
+    const typeLabel = item.type === 'mystery' ? 'Mystery Pack' : (item.type === 'coupon' ? 'Coupon Pack' : 'Discounted Item');
+    const discountInfo = item.discountPercent ? ` • ${item.discountPercent}% off` : '';
+    return `
     <li class="item">
       <div>
         <div style="font-weight:600;">${item.title}</div>
-        <div class="muted">${item.type === 'mystery' ? 'Mystery Pack' : (item.type === 'coupon' ? 'Coupon Pack' : 'Item')} • ${item.qty} ${item.type === 'coupon' ? 'remaining' : 'left'}</div>
+        <div class="muted">${typeLabel}${discountInfo} • ${item.qty} ${item.type === 'coupon' ? 'remaining' : 'left'}</div>
       </div>
       <div class="actions">
         <span class="price">${formatPrice(item.price)}</span>
@@ -258,7 +261,8 @@ function renderVendor() {
         <button class="secondary" data-action="delete" data-id="${item.id}">Remove</button>
       </div>
     </li>
-  `).join('');
+  `;
+  }).join('');
 
   $('#m-revenue').textContent = formatPrice(state.vendor.metrics.revenue);
   $('#m-sold').textContent = String(state.vendor.metrics.sold);
@@ -325,8 +329,8 @@ function showItemModal(entry) {
   $('#modal-original').textContent = entry.original ? formatPrice(entry.original) : '';
   $('#modal-discount').textContent = `${pct}% off`;
   $('#modal-qty').textContent = entry.qty || 'Limited';
-  $('#modal-kind').textContent = entry.kind === 'mystery' ? 'Mystery Box' : (entry.kind === 'coupon' ? 'Coupon Pack' : 'Item');
-  $('#modal-img').src = entry.img || './assets/bread.png';
+  $('#modal-kind').textContent = entry.kind === 'mystery' ? 'Mystery Box' : (entry.kind === 'coupon' ? 'Coupon Pack' : 'Discounted Item');
+  $('#modal-img').src = entry.img || './assets/images/Image-1.png';
   
   // Store current entry for add to cart
   modal.dataset.entry = JSON.stringify(entry);
@@ -510,6 +514,33 @@ function bindEvents() {
     if (state.view === 'consumer') renderDeals();
   });
 
+  $('#add-discount-item').addEventListener('click', () => {
+    const id = 'i' + Math.random().toString(36).slice(2, 8);
+    const name = $('#item-name').value.trim() || 'Discounted Item';
+    const originalPrice = Number($('#item-original-price').value || 5);
+    const discountPct = Math.min(90, Math.max(10, Number($('#item-discount-pct').value || 50)));
+    const qty = Math.max(1, Number($('#item-qty').value || 3));
+    const discountedPrice = originalPrice * (1 - discountPct / 100);
+    const title = `${name} (${discountPct}% off)`;
+    state.vendor.inventory.unshift({ 
+      id, 
+      type: 'item', 
+      title, 
+      price: discountedPrice, 
+      original: originalPrice, 
+      discountPercent: discountPct,
+      qty, 
+      distanceKm: 1.2 
+    });
+    // Clear form
+    $('#item-name').value = '';
+    $('#item-original-price').value = 5;
+    $('#item-discount-pct').value = 50;
+    $('#item-qty').value = 3;
+    renderVendor();
+    if (state.view === 'consumer') renderDeals();
+  });
+
   $('#inventory-list').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
@@ -563,7 +594,7 @@ function bindEvents() {
       const original = btn.getAttribute('data-original') ? Number(btn.getAttribute('data-original')) : null;
       const kind = btn.getAttribute('data-kind');
       const vendor = btn.getAttribute('data-vendor');
-      const img = assetByKind[kind] || './assets/bread.png';
+      const img = assetByKind[kind] || './assets/images/Image-1.png';
       
       // Find full entry details
       const blocks = [{
